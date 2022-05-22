@@ -18,8 +18,7 @@ async function run(){
         await client.connect();
         const productCollection=client.db('StoreService').collection('product');
         app.get('/product',async(req,res)=>{
-            const query={};
-            const cursor= await productCollection.find(query).toArray();
+            const cursor= await productCollection.find().toArray();
             res.send(cursor)
         })
     }
