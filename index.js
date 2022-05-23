@@ -29,12 +29,22 @@ async function run(){
             const product = await productCollection.findOne(query);
             res.send(product);
         })
+        // purchase order page add
+        app.get('/purchase',async(req,res)=>{
+            const email=req.query.email;
+            const query={email:email};
+            const orders=await purchaseCollection.find(query).toArray();
+            res.send(orders);
+        })
+
         // purchase 
         app.post('/purchase',async(req,res)=>{
             const newPurchase=req.body;
             const result=await purchaseCollection.insertOne(newPurchase);
             res.send(result);
         })
+        // delete order
+        
     }
     finally{
 
