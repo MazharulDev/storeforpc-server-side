@@ -67,6 +67,19 @@ async function run(){
             const token=jwt.sign({email:email},process.env.ACCESS_TOKEN,{expiresIn:'1d'})
             res.send({result,accessToken:token});
         });
+        // show user allUser page
+        app.get('/user',verifyJWT, async(req,res)=>{
+            const users=await userCollection.find().toArray()
+            res.send(users);
+        })
+        //delete user
+        app.delete('/user/:id',async(req,res)=>{
+            const id=req.params.id;
+            const query={_id:ObjectId(id)};
+            const result=await userCollection.deleteOne(query);
+            res.send(result)
+        })
+        // 
 
         // purchase 
         app.post('/purchase',async(req,res)=>{
