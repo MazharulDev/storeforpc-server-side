@@ -79,7 +79,16 @@ async function run(){
             const result=await userCollection.deleteOne(query);
             res.send(result)
         })
-        // 
+        // admin create
+        app.put('/user/admin/:email',async(req,res)=>{
+            const email=req.params.email;
+            const filter={email: email};
+            const updateDoc={
+                $set:{role:'admin'},
+            };
+            const result=await userCollection.updateOne(filter,updateDoc);
+            res.send(result);
+        });
 
         // purchase 
         app.post('/purchase',async(req,res)=>{
