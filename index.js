@@ -3,10 +3,10 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
-const port=process.env.PORT||5000;
- 
-const app=express();
- 
+const port = process.env.PORT || 5000;
+
+const app = express();
+
 //middleware
 app.use(cors());
 app.use(express.json());
@@ -15,30 +15,30 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fkt9n.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyJWT(req,res,next){
-    const authHeader=req.headers.authorization;
-    if(!authHeader){
-        return res.status(401).send({message:'unauthorize access'})
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorize access' })
     }
-    const token=authHeader.split(' ')[1];
-    jwt.verify(token,process.env.ACCESS_TOKEN,function(err,decoded){
-        if(err){
-            return res.status(403).send({message:'Forbidden access'})
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
         }
-        req.decoded=decoded;
+        req.decoded = decoded;
         next()
     });
 }
 
 
-async function run(){
-    try{
+async function run() {
+    try {
         await client.connect();
-        const productCollection=client.db('StoreService').collection('product');
-        const purchaseCollection=client.db('StoreService').collection('purchase');
-        const userCollection=client.db('StoreService').collection('user');
-        app.get('/product',async(req,res)=>{
-            const cursor= await productCollection.find().toArray();
+        const productCollection = client.db('StoreService').collection('product');
+        const purchaseCollection = client.db('StoreService').collection('purchase');
+        const userCollection = client.db('StoreService').collection('user');
+        app.get('/product', async (req, res) => {
+            const cursor = await productCollection.find().toArray();
             res.send(cursor)
         });
         app.get('/product/:id', async (req, res) => {
@@ -48,72 +48,86 @@ async function run(){
             res.send(product);
         })
         // purchase order page add
-        app.get('/purchase',verifyJWT, async(req,res)=>{
-            const email=req.query.email;
-            const query={email:email};
-            const orders=await purchaseCollection.find(query).toArray();
+        app.get('/purchase', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const orders = await purchaseCollection.find(query).toArray();
             res.send(orders);
         })
         //user info
-        app.put('/user/:email',async(req,res)=>{
-            const email=req.params.email;
-            const user=req.body;
-            const filter={email: email};
-            const options={upsert:true};
-            const updateDoc={
-                $set:user,
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
             };
-            const result=await userCollection.updateOne(filter,updateDoc,options);
-            const token=jwt.sign({email:email},process.env.ACCESS_TOKEN,{expiresIn:'1d'})
-            res.send({result,accessToken:token});
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '1d' })
+            res.send({ result, accessToken: token });
         });
         // show user allUser page
-        app.get('/user',verifyJWT, async(req,res)=>{
-            const users=await userCollection.find().toArray()
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray()
             res.send(users);
         })
         //delete user
-        app.delete('/user/:id',async(req,res)=>{
-            const id=req.params.id;
-            const query={_id:ObjectId(id)};
-            const result=await userCollection.deleteOne(query);
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
             res.send(result)
         })
         // admin create
-        app.put('/user/admin/:email',async(req,res)=>{
-            const email=req.params.email;
-            const filter={email: email};
-            const updateDoc={
-                $set:{role:'admin'},
-            };
-            const result=await userCollection.updateOne(filter,updateDoc);
-            res.send(result);
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const reqUser = req.decoded.email;
+            const reqUserAccount = await userCollection.findOne({ email: reqUser });
+            if (reqUserAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
+            } else {
+                res.status(403).send({ message: 'Forbidden' })
+            }
+
         });
+        //admin verify
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        })
 
         // purchase 
-        app.post('/purchase',async(req,res)=>{
-            const newPurchase=req.body;
-            const result=await purchaseCollection.insertOne(newPurchase);
+        app.post('/purchase', async (req, res) => {
+            const newPurchase = req.body;
+            const result = await purchaseCollection.insertOne(newPurchase);
             res.send(result);
         })
         // delete order
-        app.delete('/purchase/:id',async(req,res)=>{
-            const id=req.params.id;
-            const query={_id:ObjectId(id)};
-            const result=await purchaseCollection.deleteOne(query);
+        app.delete('/purchase/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.deleteOne(query);
             res.send(result)
         })
     }
-    finally{
+    finally {
 
     }
 }
 run().catch(console.dir)
- 
-app.get('/',(req,res)=>{
-   res.send('running test')
+
+app.get('/', (req, res) => {
+    res.send('running test')
 })
- 
-app.listen(port,()=>{
-   console.log("Listening to port",port);
+
+app.listen(port, () => {
+    console.log("Listening to port", port);
 })
