@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -37,10 +38,29 @@ async function run() {
         const productCollection = client.db('StoreService').collection('product');
         const purchaseCollection = client.db('StoreService').collection('purchase');
         const userCollection = client.db('StoreService').collection('user');
-        app.get('/product', async (req, res) => {
+        const reviewCollection = client.db('StoreService').collection('review');
+
+        const verifyAdmin = async (req, res, next) => {
+            const reqUser = req.decoded.email;
+            const reqUserAccount = await userCollection.findOne({ email: reqUser });
+            if (reqUserAccount.role === 'admin') {
+                next();
+            } else {
+                res.status(403).send({ message: 'Forbidden' })
+            }
+        }
+        // all product get
+        app.get('/product', verifyJWT, async (req, res) => {
             const cursor = await productCollection.find().toArray();
             res.send(cursor)
         });
+        // product add
+        app.post('/product', verifyJWT, verifyAdmin, async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        });
+        // single product api
         app.get('/product/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -53,6 +73,13 @@ async function run() {
             const query = { email: email };
             const orders = await purchaseCollection.find(query).toArray();
             res.send(orders);
+        })
+        // single purchase order
+        app.get('/purchase/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const purchase = await purchaseCollection.findOne(query);
+            res.send(purchase);
         })
         //user info
         app.put('/user/:email', async (req, res) => {
@@ -80,21 +107,14 @@ async function run() {
             res.send(result)
         })
         // admin create
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const reqUser = req.decoded.email;
-            const reqUserAccount = await userCollection.findOne({ email: reqUser });
-            if (reqUserAccount.role === 'admin') {
-                const filter = { email: email };
-                const updateDoc = {
-                    $set: { role: 'admin' },
-                };
-                const result = await userCollection.updateOne(filter, updateDoc);
-                res.send(result);
-            } else {
-                res.status(403).send({ message: 'Forbidden' })
-            }
-
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
         });
         //admin verify
         app.get('/admin/:email', async (req, res) => {
@@ -116,6 +136,24 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.deleteOne(query);
             res.send(result)
+        })
+        //payment api
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+        // post review
+        app.post('/review', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review)
+            res.send(result);
         })
     }
     finally {
