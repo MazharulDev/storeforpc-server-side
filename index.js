@@ -39,6 +39,7 @@ async function run() {
         const purchaseCollection = client.db('StoreService').collection('purchase');
         const userCollection = client.db('StoreService').collection('user');
         const reviewCollection = client.db('StoreService').collection('review');
+        const paymentsCollection = client.db('StoreService').collection('payments');
 
         const verifyAdmin = async (req, res, next) => {
             const reqUser = req.decoded.email;
@@ -80,6 +81,20 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const purchase = await purchaseCollection.findOne(query);
             res.send(purchase);
+        })
+        //quantity update
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const update = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    available: update.count
+                }
+            };
+            const result = await productCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
         })
         //user info
         app.put('/user/:email', async (req, res) => {
@@ -149,6 +164,22 @@ async function run() {
             });
             res.send({ clientSecret: paymentIntent.client_secret })
         });
+        //update payment 
+        app.patch('/purchase/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+                }
+            }
+            const result = await paymentsCollection.insertOne(payment);
+            const updatePurchase = await purchaseCollection.updateOne(filter, updateDoc);
+            res.send(updateDoc)
+
+        })
         // post review
         app.post('/review', async (req, res) => {
             const review = req.body;
