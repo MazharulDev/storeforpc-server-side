@@ -70,7 +70,7 @@ async function run() {
             res.send(product);
         })
         //Delete product
-        app.delete('/product/:id',verifyJWT, async (req, res) => {
+        app.delete('/product/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await productCollection.deleteOne(query);
@@ -124,7 +124,7 @@ async function run() {
             res.send(users);
         })
         //delete user
-        app.delete('/user/:id',verifyJWT, async (req, res) => {
+        app.delete('/user/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await userCollection.deleteOne(query);
@@ -149,13 +149,13 @@ async function run() {
         })
 
         // purchase 
-        app.post('/purchase',verifyJWT, async (req, res) => {
+        app.post('/purchase', async (req, res) => {
             const newPurchase = req.body;
             const result = await purchaseCollection.insertOne(newPurchase);
             res.send(result);
         })
         // delete order
-        app.delete('/purchase/:id',verifyJWT, async (req, res) => {
+        app.delete('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.deleteOne(query);
@@ -190,7 +190,7 @@ async function run() {
 
         })
         // post review
-        app.post('/review',verifyJWT, async (req, res) => {
+        app.post('/review', verifyJWT, async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review)
             res.send(result);
