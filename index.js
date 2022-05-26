@@ -69,6 +69,13 @@ async function run() {
             const product = await productCollection.findOne(query);
             res.send(product);
         })
+        //Delete product
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(query);
+            res.send(result)
+        })
         // purchase order page add
         app.get('/purchase', verifyJWT, async (req, res) => {
             const email = req.query.email;
@@ -83,6 +90,7 @@ async function run() {
             const purchase = await purchaseCollection.findOne(query);
             res.send(purchase);
         })
+        
         //quantity update
         app.put('/product/:id', async (req, res) => {
             const id = req.params.id;
