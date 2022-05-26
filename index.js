@@ -77,7 +77,7 @@ async function run() {
             res.send(result)
         })
         // purchase order page add
-        app.get('/purchase', verifyJWT, async (req, res) => {
+        app.get('/purchase', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const orders = await purchaseCollection.find(query).toArray();
