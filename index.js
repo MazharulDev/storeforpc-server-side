@@ -220,6 +220,12 @@ async function run() {
 
             res.send(result);
         })
+        app.get('/userProfile', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await userProfileCollection.find(query).toArray();
+            res.send(user)
+        })
     }
     finally {
 
