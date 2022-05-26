@@ -224,7 +224,7 @@ async function run() {
             const email = req.query.email;
             const query = { email: email };
             const user = await userProfileCollection.find(query).toArray();
-            res.send(user)
+            res.send(user);
         })
     }
     finally {
