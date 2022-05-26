@@ -208,9 +208,16 @@ async function run() {
             res.send(result);
         })
         //update user profile
-        app.post('/userProfile', async (req, res) => {
+        app.put('/userProfile/:email', async (req, res) => {
+            const email = req.params.email;
             const profile = req.body;
-            const result = await userProfileCollection.insertOne(profile);
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: profile,
+            };
+            const result = await userProfileCollection.updateOne(filter, updateDoc, options);
+
             res.send(result);
         })
     }
