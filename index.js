@@ -52,7 +52,7 @@ async function run() {
             }
         }
         // all product get
-        app.get('/product', verifyJWT, async (req, res) => {
+        app.get('/product', async (req, res) => {
             const cursor = await productCollection.find().toArray();
             res.send(cursor)
         });
@@ -63,14 +63,14 @@ async function run() {
             res.send(result);
         });
         // single product api
-        app.get('/product/:id', async (req, res) => {
+        app.get('/product/:id',verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const product = await productCollection.findOne(query);
             res.send(product);
         })
         //Delete product
-        app.delete('/product/:id', async (req, res) => {
+        app.delete('/product/:id',verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await productCollection.deleteOne(query);
@@ -90,7 +90,7 @@ async function run() {
             const purchase = await purchaseCollection.findOne(query);
             res.send(purchase);
         })
-        
+
         //quantity update
         app.put('/product/:id', async (req, res) => {
             const id = req.params.id;
@@ -124,7 +124,7 @@ async function run() {
             res.send(users);
         })
         //delete user
-        app.delete('/user/:id', async (req, res) => {
+        app.delete('/user/:id',verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await userCollection.deleteOne(query);
@@ -149,13 +149,13 @@ async function run() {
         })
 
         // purchase 
-        app.post('/purchase', async (req, res) => {
+        app.post('/purchase',verifyJWT, async (req, res) => {
             const newPurchase = req.body;
             const result = await purchaseCollection.insertOne(newPurchase);
             res.send(result);
         })
         // delete order
-        app.delete('/purchase/:id', async (req, res) => {
+        app.delete('/purchase/:id',verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.deleteOne(query);
@@ -190,7 +190,7 @@ async function run() {
 
         })
         // post review
-        app.post('/review', async (req, res) => {
+        app.post('/review',verifyJWT, async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review)
             res.send(result);
