@@ -41,6 +41,7 @@ async function run() {
         const reviewCollection = client.db('StoreService').collection('review');
         const paymentsCollection = client.db('StoreService').collection('payments');
         const userContactCollection = client.db('StoreService').collection('userContact');
+        const userProfileCollection = client.db('StoreService').collection('userProfile');
 
         const verifyAdmin = async (req, res, next) => {
             const reqUser = req.decoded.email;
@@ -204,6 +205,12 @@ async function run() {
         app.post('/userContact', async (req, res) => {
             const contact = req.body;
             const result = await userContactCollection.insertOne(contact);
+            res.send(result);
+        })
+        //update user profile
+        app.post('/userProfile', async (req, res) => {
+            const profile = req.body;
+            const result = await userProfileCollection.insertOne(profile);
             res.send(result);
         })
     }
