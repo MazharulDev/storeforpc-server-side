@@ -40,6 +40,7 @@ async function run() {
         const userCollection = client.db('StoreService').collection('user');
         const reviewCollection = client.db('StoreService').collection('review');
         const paymentsCollection = client.db('StoreService').collection('payments');
+        const userContactCollection = client.db('StoreService').collection('userContact');
 
         const verifyAdmin = async (req, res, next) => {
             const reqUser = req.decoded.email;
@@ -190,6 +191,12 @@ async function run() {
         app.get('/review', async (req, res) => {
             const allReview = await reviewCollection.find().toArray();
             res.send(allReview);
+        })
+        //user contact store
+        app.post('/userContact', async (req, res) => {
+            const contact = req.body;
+            const result = await userContactCollection.insertOne(contact);
+            res.send(result);
         })
     }
     finally {
